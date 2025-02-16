@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Jekyll dependency updates (Gemfile and Gemfile.lock)
+  - package-ecosystem: "bundler"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+  
+  # GitHub Actions dependency updates (action versions and workflows)
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
