@@ -7,7 +7,6 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "deps"
-    versioning-strategy: "increase"
   
   # GitHub Actions dependency updates (action versions and workflows)
   - package-ecosystem: "github-actions"
@@ -16,4 +15,3 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "deps"
-    versioning-strategy: "increase"
