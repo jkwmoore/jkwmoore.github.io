@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Jekyll dependency updates (Gemfile and Gemfile.lock)
+  - package-ecosystem: "rubygems"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+    versioning-strategy: "increase"
+  
+  # GitHub Actions dependency updates (action versions and workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+    versioning-strategy: "increase"
