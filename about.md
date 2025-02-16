@@ -10,6 +10,8 @@ This is a minimal blog I might write some stuff on. Maybe some things from work 
 
 - 🔭 I’m currently working on: [Our newest HPC cluster, Stanage.](https://docs.hpc.shef.ac.uk/en/latest/stanage/cluster_specs.html)
 - 💬 Ask me about: **High Performance Computing**
+- [My Linktree](https://linktr.ee/jkwmoore)
+
 
 <h3 align="left">Languages and Tools I use:</h3>
 <img src="https://raw.githubusercontent.com/teamedwardforever/Readme-Generator/71f25dd8b98329b168142a6b782a107b75eab178/svg/Skills/Languages/python-original.svg" alt="Python" width="40" height="40" style="display: inline-block; margin-right: 10px;"/>
