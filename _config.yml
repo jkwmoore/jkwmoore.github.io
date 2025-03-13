@@ -24,6 +24,7 @@ sass:
   style: compressed
 
 plugins:
+  - jekyll-code-snippet
   - jekyll-feed
   - jekyll-seo-tag
   - jektex
