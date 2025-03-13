@@ -107,4 +107,5 @@ allow(Puppet::Pops::Lookup).to receive(:lookup).and_call_original
 6. I am not a Ruby expert nor Puppet/PDK backend expert - here be dragons!
 
 GLHF!
+
 JKWM.
