@@ -77,7 +77,11 @@ table, th, td {
 
 code {
   color: white;
-  background: black; }
+  background: black;
+  white-space: pre; /* Preserve whitespace and prevent wrapping */
+  overflow-x: auto; /* Enable horizontal scrolling if content overflows */
+  display: block; /* Ensure it behaves like a block for consistent scrolling */
+}
 
 div.highlighter-rouge code {
   display: block;
