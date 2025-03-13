@@ -50,7 +50,7 @@ li { margin: 0.4rem 0; }
 *:target { background: yellow; }
 
 .w {
-  max-width: 640px;
+  max-width: 1024px;
   margin: 0 auto;
   padding: 4rem 2rem;
 }
@@ -77,9 +77,9 @@ code {
 }
 
 div.highlighter-rouge code {
-  display: block;
-  overflow-x: auto;
-  white-space: pre-wrap;
+  white-space: pre; /* Preserve whitespace and prevent wrapping */
+  overflow-x: auto; /* Enable horizontal scrolling if content overflows */
+  display: block; /* Ensure it behaves like a block for consistent scrolling */
   padding: 1rem;
 }
 
