@@ -98,4 +98,36 @@ img {
   display: block;
   margin: 0 auto; }
 
+  .highlight {
+    position: relative; /* Make the container the positioning reference */
+  }
+  
+  button.copy {
+    position: absolute;
+    top: 5px; /* Adjust to fine-tune vertical position */
+    right: 5px; /* Align to the top right corner */
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .highlight > button {
+    opacity: 0;
+  }
+  
+  .highlight:hover > button {
+    opacity: 1;
+  }
+  
+  .highlight > button:active,
+  .highlight > button:focus {
+    opacity: 1;
+  }
+
 /*# sourceMappingURL=main.css.map */
