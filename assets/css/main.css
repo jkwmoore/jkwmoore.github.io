@@ -1,0 +1,133 @@
+body[a="dark"] {
+  filter: invert(1); }
+  body[a="dark"] img {
+    filter: invert(1); }
+    body[a="dark"] img.ioda {
+      filter: invert(0); }
+  body[a="dark"] .emoji {
+    filter: invert(1); }
+  body[a="dark"] iframe {
+    filter: invert(1); }
+
+@media (prefers-color-scheme: dark) {
+  body[a="auto"] {
+    filter: invert(1); }
+    body[a="auto"] img {
+      filter: invert(1); }
+      body[a="auto"] img.ioda {
+        filter: invert(0); }
+    body[a="auto"] .emoji {
+      filter: invert(1); }
+    body[a="auto"] iframe {
+      filter: invert(1); } }
+html, body {
+  background: white; }
+
+html {
+  height: 100%;
+  scroll-behavior: smooth; }
+
+body {
+  color: black;
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0;
+  min-height: 100%;
+  overflow-wrap: break-word; }
+
+.post-meta {
+  text-align: right; }
+
+h2, h3, h4, h5, h6 {
+  margin-top: 3rem; }
+
+hr {
+  margin: 2rem 0; }
+
+p {
+  margin: 1rem 0; }
+
+li {
+  margin: 0.4rem 0; }
+
+*:target {
+  background: yellow; }
+
+.w {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 4rem 2rem; }
+
+hr {
+  text-align: center;
+  border: 0; }
+  hr:before {
+    content: "/////"; }
+  hr:after {
+    content: attr(data-content) "/////"; }
+
+table {
+  width: 100%; }
+
+table, th, td {
+  border: thin solid black;
+  border-collapse: collapse;
+  padding: 0.4rem; }
+
+code {
+  color: white;
+  background: black;
+}
+
+div.highlighter-rouge code {
+  white-space: pre; /* Preserve whitespace and prevent wrapping */
+  overflow-x: auto; /* Enable horizontal scrolling if content overflows */
+  display: block; /* Ensure it behaves like a block for consistent scrolling */
+  padding: 1rem; }
+
+blockquote {
+  font-style: italic;
+  border: thin solid black;
+  padding: 1rem; }
+  blockquote p {
+    margin: 0; }
+
+img {
+  max-width: 100%;
+  display: block;
+  margin: 0 auto; }
+
+  .highlight {
+    position: relative; /* Make the container the positioning reference */
+  }
+  
+  button.copy {
+    position: absolute;
+    top: 5px; /* Adjust to fine-tune vertical position */
+    right: 5px; /* Align to the top right corner */
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .highlight > button {
+    opacity: 0;
+  }
+  
+  .highlight:hover > button {
+    opacity: 1;
+  }
+  
+  .highlight > button:active,
+  .highlight > button:focus {
+    opacity: 1;
+  }
+
+/*# sourceMappingURL=main.css.map */
