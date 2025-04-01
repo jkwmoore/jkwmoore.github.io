@@ -10,7 +10,7 @@ This is a minimal blog I might write some stuff on. Maybe some things from work 
 
 - 🔭 I’m currently working on: [Our newest HPC cluster, Stanage.](https://docs.hpc.shef.ac.uk/en/latest/stanage/cluster_specs.html)
 - 💬 Ask me about: **High Performance Computing**
-- [My Linktree](https://linktr.ee/jkwmoore)
+- [My Linktree](https://link.jkwmoore.dev/)
 
 
 <h3 align="left">Languages and Tools I use:</h3>
