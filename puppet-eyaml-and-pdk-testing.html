@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Puppet PDK testing when using hiera eyaml</title>
+
+  <link type="application/atom+xml" rel="alternate" href="https://blog.jkwmoore.dev/feed.xml" title="blog.jkwmoore.dev" /><link rel="shortcut icon" type="image/x-icon" href="/logo.png" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.css" integrity="sha384-OH8qNTHoMMVNVcKdKewlipV4SErXqccxxlg6HC9Cwjr5oZu2AdBej1TndeCirael" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <meta name="fediverse:creator" content="@jkwmoore@mast.hpc.social">
+  <a rel="me" href="https://mast.hpc.social/@jkwmoore" style="display: none;"></a>
+  <script>hljs.highlightAll();</script>
+</head>
+<body a="auto">
+    <main class="page-content" aria-label="Content">
+      <div class="w">
+        <a href="/">.. go back</a><article>
+  <p class="post-meta">
+    <time datetime="2025-03-07 00:00:00 +0000">2025-03-07</time>
+  </p>
+  
+  <h1>Puppet PDK testing when using hiera eyaml</h1>
+
+  <blockquote>
+  <p>Warning: I cannot claim to be a Puppet backend expert but I managed to get past PDK testing issues as below.</p>
+</blockquote>
+
+<hr />
+
+<h3 id="what-was-the-problem">What was the problem?</h3>
+
+<p>PDK tests are failing because I don’t have the keys necessary to decrypt the secrets while testing locally. 
+I also do not want to keep the encryption keys locally, nor anywhere except the PuppetServer.</p>
+
+<p>So what do these errors look like?</p>
+
+<p>Well, I am trying to use the following from my hiera <code class="language-plaintext highlighter-rouge">common.eyaml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">myclass::mysecretstring: ENC[PKCS7,MYENCRYPTEDSECRETSTRINGCONTENT]</span>
+</code></pre></div></div>
+
+<p>And PDK gives me:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  1<span class="o">)</span> myclass::mymanifest on redhat-8-x86_64 is expected to compile into a catalogue without dependency cycles
+     Failure/Error: it <span class="o">{</span> is_expected.to compile <span class="o">}</span>
+       error during compilation: Function lookup<span class="o">()</span> did not find a value <span class="k">for </span>the name <span class="s1">'myclass::mysecretstring'</span> on node my_dev_machine.local
+     <span class="c"># ./spec/classes/mymanifest_spec.rb:10:in `block (4 levels) in &lt;top (required)&gt;'</span>
+</code></pre></div></div>
+
+<h3 id="how-did-i-sort-this">How did I sort this?</h3>
+
+<p>I added overrides to the spec test used for the class.</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="n">before</span> <span class="k">do</span>
+        <span class="n">allow</span><span class="p">(</span><span class="no">Puppet</span><span class="o">::</span><span class="no">Pops</span><span class="o">::</span><span class="no">Lookup</span><span class="p">).</span><span class="nf">to</span> <span class="n">receive</span><span class="p">(</span><span class="ss">:lookup</span><span class="p">).</span><span class="nf">and_call_original</span>  <span class="c1"># Allow normal lookups</span>
+
+        <span class="n">allow</span><span class="p">(</span><span class="no">Puppet</span><span class="o">::</span><span class="no">Pops</span><span class="o">::</span><span class="no">Lookup</span><span class="p">).</span><span class="nf">to</span> <span class="n">receive</span><span class="p">(</span><span class="ss">:lookup</span><span class="p">)</span>
+          <span class="p">.</span><span class="nf">with</span><span class="p">(</span><span class="s1">'myclass::mysecretstring'</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">)</span>
+          <span class="p">.</span><span class="nf">and_return</span><span class="p">(</span><span class="s1">'MOCKED_VALUE_STRING'</span><span class="p">)</span>
+      <span class="k">end</span>
+</code></pre></div></div>
+
+<h3 id="why-do-i-think-this-works">Why do I think this works</h3>
+
+<p>Aside of the fact I tested it and it appears to do what I wanted, see below:</p>
+
+<h4 id="what-is-puppetpopslookup"><strong>What is <code class="language-plaintext highlighter-rouge">Puppet::Pops::Lookup</code>?</strong></h4>
+<ul>
+  <li>Puppet uses <strong>Hiera</strong> to retrieve values from a hierarchy of data sources.</li>
+  <li>When a class requests a variable via <code class="language-plaintext highlighter-rouge">lookup('some_variable')</code>, Puppet internally calls <code class="language-plaintext highlighter-rouge">Puppet::Pops::Lookup.lookup('some_variable', ...)</code>.</li>
+  <li>This function searches for the requested key across the defined Hiera hierarchy.</li>
+  <li>https://www.rubydoc.info/gems/puppet/Puppet%2FPops%2FLookup.lookup</li>
+</ul>
+
+<p>For example, if the Puppet manifest has:</p>
+<div class="language-puppet highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$mysecret</span> <span class="o">=</span> <span class="nf">lookup</span><span class="p">(</span><span class="s1">'myclass::mysecretstring'</span><span class="p">)</span>
+</code></pre></div></div>
+<p>Puppet will call:</p>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">Puppet</span><span class="o">::</span><span class="no">Pops</span><span class="o">::</span><span class="no">Lookup</span><span class="p">.</span><span class="nf">lookup</span><span class="p">(</span><span class="s1">'myclass::mysecretstring'</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div></div>
+<p>and return the corresponding value from Hiera.</p>
+
+<hr />
+
+<h4 id="stub-only-the-problematic-lookup">Stub Only the Problematic Lookup</h4>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">allow</span><span class="p">(</span><span class="no">Puppet</span><span class="o">::</span><span class="no">Pops</span><span class="o">::</span><span class="no">Lookup</span><span class="p">).</span><span class="nf">to</span> <span class="n">receive</span><span class="p">(</span><span class="ss">:lookup</span><span class="p">)</span>
+  <span class="p">.</span><span class="nf">with</span><span class="p">(</span><span class="s1">'myclass::mysecretstring'</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">,</span> <span class="n">anything</span><span class="p">)</span>
+  <span class="p">.</span><span class="nf">and_return</span><span class="p">(</span><span class="s1">'MOCKED_VALUE_STRING'</span><span class="p">)</span>
+</code></pre></div></div>
+<ul>
+  <li>This overrides lookups <strong>only</strong> for <code class="language-plaintext highlighter-rouge">myclass::mysecretstring</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">.with(...)</code> ensures that this stub only activates when the exact expected arguments are passed.</li>
+  <li><code class="language-plaintext highlighter-rouge">.and_return('MOCKED_VALUE_STRING')</code> means that <strong>whenever Puppet tries to look up this variable, it will get <code class="language-plaintext highlighter-rouge">'MOCKED_VALUE_STRING'</code> instead of failing.</strong></li>
+  <li>Depending on the expected data type for encrypted values, different mocking values may be required.</li>
+</ul>
+
+<p><strong>Effect:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">lookup('myclass::mysecretstring')</code> <strong>returns <code class="language-plaintext highlighter-rouge">'MOCKED_VALUE_STRING'</code> instead of failing</strong>.</li>
+  <li>All other lookups still use Hiera data lookups as normal/expected.</li>
+</ul>
+
+<hr />
+
+<h4 id="allow-normal-lookups">Allow Normal Lookups</h4>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">allow</span><span class="p">(</span><span class="no">Puppet</span><span class="o">::</span><span class="no">Pops</span><span class="o">::</span><span class="no">Lookup</span><span class="p">).</span><span class="nf">to</span> <span class="n">receive</span><span class="p">(</span><span class="ss">:lookup</span><span class="p">).</span><span class="nf">and_call_original</span>
+</code></pre></div></div>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">allow(...).to receive(:lookup)</code> tells RSpec to intercept calls to <code class="language-plaintext highlighter-rouge">Puppet::Pops::Lookup.lookup</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">.and_call_original</code> ensures that all other lookups (except the one we explicitly stub) continue to function normally.</li>
+  <li>Without this, RSpec would try to stub all lookups, causing unexpected failures when other values like <code class="language-plaintext highlighter-rouge">myclass::someotherstring'</code> are requested from <code class="language-plaintext highlighter-rouge">common.yaml</code>.</li>
+</ul>
+
+<p><strong>Effect:</strong></p>
+<ul>
+  <li>Any <code class="language-plaintext highlighter-rouge">lookup('some_variable')</code> that is not explicitly stubbed will still perform its normal function.</li>
+</ul>
+
+<hr />
+
+<h3 id="tldr-why-i-think-this-works-and-warnings"><strong>tl;dr Why I think this works and warnings</strong></h3>
+<ol>
+  <li><strong>Ensures normal lookups proceed without modification</strong> → The <code class="language-plaintext highlighter-rouge">.and_call_original</code> call ensures we do not break unrelated lookups.</li>
+  <li><strong>Only stubs the problematic keys</strong> → This avoids unnecessary stubbing and allows normal Puppet behavior.</li>
+  <li><strong>Prevents lookup errors in tests</strong> → PDK tests no longer fail due to “missing” Hiera data.</li>
+  <li>Depending on the expected data type for encrypted values, different mocking values may be required.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">Method: Puppet::Pops::Lookup.lookup</code> method documentation explicitly says:
+  <code class="language-plaintext highlighter-rouge">This method is part of a private API. You should avoid using this method if possible, as it may be removed or be changed in the future.</code></li>
+  <li>I am not a Ruby expert nor Puppet/PDK backend expert - here be dragons!</li>
+</ol>
+
+<p>GLHF!</p>
+
+<p>JKWM.</p>
+
+</article>
+      </div>
+    </main>
+  </body>
+
+  <script>
+  var codeBlocks = document.querySelectorAll('div.highlight');
+
+  codeBlocks.forEach(function (codeBlock) {
+    var copyButton = document.createElement('button');
+    copyButton.className = 'copy';
+    copyButton.type = 'button';
+    copyButton.ariaLabel = 'Copy code to clipboard';
+    copyButton.innerText = 'Copy';
+
+    codeBlock.append(copyButton);
+
+    copyButton.addEventListener('click', function () {
+      var code = codeBlock.querySelector('code').innerText.trim();
+      window.navigator.clipboard.writeText(code);
+
+      copyButton.innerText = 'Copied';
+      var fourSeconds = 4000;
+
+      setTimeout(function () {
+        copyButton.innerText = 'Copy';
+      }, fourSeconds);
+    });
+  });
+  </script>
+</html>

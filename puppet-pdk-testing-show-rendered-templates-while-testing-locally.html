@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Puppet PDK testing: Show rendered templates while testing locally</title>
+
+  <link type="application/atom+xml" rel="alternate" href="https://blog.jkwmoore.dev/feed.xml" title="blog.jkwmoore.dev" /><link rel="shortcut icon" type="image/x-icon" href="/logo.png" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.css" integrity="sha384-OH8qNTHoMMVNVcKdKewlipV4SErXqccxxlg6HC9Cwjr5oZu2AdBej1TndeCirael" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <meta name="fediverse:creator" content="@jkwmoore@mast.hpc.social">
+  <a rel="me" href="https://mast.hpc.social/@jkwmoore" style="display: none;"></a>
+  <script>hljs.highlightAll();</script>
+</head>
+<body a="auto">
+    <main class="page-content" aria-label="Content">
+      <div class="w">
+        <a href="/">.. go back</a><article>
+  <p class="post-meta">
+    <time datetime="2025-03-13 00:00:00 +0000">2025-03-13</time>
+  </p>
+  
+  <h1>Puppet PDK testing: Show rendered templates while testing locally</h1>
+
+  <h3 id="what-was-the-problem">What was the problem?</h3>
+
+<p>I want to see what my templates are rendering while doing local testing. This is pretty helpful especially if you’ve got some hiera data being used
+that you want to ensure is being rendered correctly.</p>
+
+<h3 id="how-can-we-show-the-rendered-templates-during-pdk-testing">How can we show the rendered templates during PDK testing?</h3>
+
+<p>Turns out this is pretty easy (so long as you like cheap and kind of nasty) and needs only the most basic changes to your class’s spec file.</p>
+
+<p>e.g. to show a specific template’s content via the CLI output, add the following in your class spec file, <code class="language-plaintext highlighter-rouge">spec/classes/myclass_spec.rb</code>:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'spec_helper'</span>
+
+<span class="n">describe</span> <span class="s1">'mymodule::myclass'</span> <span class="k">do</span>
+  <span class="n">on_supported_os</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">os</span><span class="p">,</span> <span class="n">os_facts</span><span class="o">|</span>
+    <span class="n">context</span> <span class="s2">"on </span><span class="si">#{</span><span class="n">os</span><span class="si">}</span><span class="s2">"</span> <span class="k">do</span>
+      <span class="n">let</span><span class="p">(</span><span class="ss">:facts</span><span class="p">)</span> <span class="p">{</span> <span class="n">os_facts</span> <span class="p">}</span>
+
+      <span class="n">it</span> <span class="p">{</span> <span class="n">is_expected</span><span class="p">.</span><span class="nf">to</span> <span class="n">compile</span> <span class="p">}</span>
+
+      <span class="c1"># To visualise the output of the /the/path/to/your/defined/file/resource.txt template during a PDK run, </span>
+      <span class="c1"># set TEMPLATE_DEBUG=true in your shell environment before running ``pdk test unit``.</span>
+      <span class="c1"># i.e. ``TEMPLATE_DEBUG=true pdk test unit``</span>
+
+      <span class="n">it</span> <span class="s1">'echoes rendered template content with OS info and markers (if TEMPLATE_DEBUG is set true)'</span> <span class="k">do</span>
+        <span class="k">if</span> <span class="no">ENV</span><span class="p">[</span><span class="s1">'TEMPLATE_DEBUG'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'true'</span>
+          <span class="n">content</span> <span class="o">=</span> <span class="n">catalogue</span><span class="p">.</span><span class="nf">resource</span><span class="p">(</span><span class="s1">'file'</span><span class="p">,</span> <span class="s1">'/the/path/to/your/defined/file/resource.txt'</span><span class="p">).</span><span class="nf">send</span><span class="p">(</span><span class="ss">:parameters</span><span class="p">)[</span><span class="ss">:content</span><span class="p">]</span>
+          <span class="nb">puts</span> <span class="s2">"################################ Generated /the/path/to/your/defined/file/resource.txt content on: </span><span class="si">#{</span><span class="n">os</span><span class="si">}</span><span class="s2">"</span>
+          <span class="nb">puts</span> <span class="s2">"</span><span class="si">#{</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span>
+          <span class="nb">puts</span> <span class="s2">"################################"</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>This might be pretty noisy if you’re PDK testing against a lot of OSes with multiple templates though <code class="language-plaintext highlighter-rouge">¯\_(ツ)_/¯</code>, so I
+figure why not be a bit more clever about it and simply render out all the template content to a subdirectory for inspection?</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s1">'spec_helper'</span>
+
+<span class="n">describe</span> <span class="s1">'mymodule::myclass'</span> <span class="k">do</span>
+  <span class="n">on_supported_os</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">os</span><span class="p">,</span> <span class="n">os_facts</span><span class="o">|</span>
+    <span class="n">context</span> <span class="s2">"on </span><span class="si">#{</span><span class="n">os</span><span class="si">}</span><span class="s2">"</span> <span class="k">do</span>
+      <span class="n">let</span><span class="p">(</span><span class="ss">:facts</span><span class="p">)</span> <span class="p">{</span> <span class="n">os_facts</span> <span class="p">}</span>
+
+      <span class="n">it</span> <span class="p">{</span> <span class="n">is_expected</span><span class="p">.</span><span class="nf">to</span> <span class="n">compile</span> <span class="p">}</span>
+
+      <span class="c1"># To render out all templated content during a PDK run to the ``rendered_templates`` subdirectory,</span>
+      <span class="c1"># set TEMPLATE_DEBUG=true in your shell environment before running ``pdk test unit``.</span>
+      <span class="c1"># i.e. ``TEMPLATE_DEBUG=true pdk test unit``</span>
+
+      <span class="n">it</span> <span class="s1">'writes generated file content to rendered_templates directory per OS version'</span> <span class="k">do</span>
+        <span class="c1"># Check if TEMPLATE_DEBUG is set to 'true'</span>
+        <span class="k">if</span> <span class="no">ENV</span><span class="p">[</span><span class="s1">'TEMPLATE_DEBUG'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'true'</span>
+          <span class="n">os_name</span> <span class="o">=</span> <span class="n">facts</span><span class="p">[</span><span class="ss">:os</span><span class="p">][</span><span class="s1">'name'</span><span class="p">].</span><span class="nf">downcase</span>
+          <span class="n">os_version</span> <span class="o">=</span> <span class="n">facts</span><span class="p">[</span><span class="ss">:os</span><span class="p">][</span><span class="s1">'release'</span><span class="p">][</span><span class="s1">'full'</span><span class="p">]</span>
+          <span class="c1"># Write out the content per OS version</span>
+          <span class="n">base_path</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s1">'rendered_templates'</span><span class="p">,</span> <span class="s2">"</span><span class="si">#{</span><span class="n">os_name</span><span class="si">}</span><span class="s2">-</span><span class="si">#{</span><span class="n">os_version</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+      
+          <span class="n">catalogue</span><span class="p">.</span><span class="nf">resources</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">resource</span><span class="o">|</span>
+            <span class="c1"># Only process 'File' resources with a valid path.</span>
+            <span class="c1"># This way we don't try to dump directories.</span>
+            <span class="k">next</span> <span class="k">unless</span> <span class="n">resource</span><span class="p">.</span><span class="nf">type</span> <span class="o">==</span> <span class="s1">'File'</span>
+
+            <span class="n">path</span> <span class="o">=</span> <span class="n">resource</span><span class="p">[</span><span class="ss">:path</span><span class="p">]</span> <span class="o">||</span> <span class="n">resource</span><span class="p">.</span><span class="nf">title</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">resource</span><span class="p">[</span><span class="ss">:content</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">path</span> <span class="o">&amp;&amp;</span> <span class="n">content</span>
+              <span class="n">output_path</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+      
+              <span class="c1"># Create the directory if it doesn't exist</span>
+              <span class="no">FileUtils</span><span class="p">.</span><span class="nf">mkdir_p</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">dirname</span><span class="p">(</span><span class="n">output_path</span><span class="p">))</span>
+
+              <span class="c1"># Write the content to the file</span>
+              <span class="no">File</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+              <span class="nb">puts</span> <span class="s2">"✅ Wrote content to: </span><span class="si">#{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">elsif</span> <span class="n">path</span>
+              <span class="c1"># Note - if the content is sourced from a file, the resource catalog does not have a content</span>
+              <span class="c1"># element for us to render out.</span>
+              <span class="nb">puts</span> <span class="s2">"⚠️ No content for: </span><span class="si">#{</span><span class="n">path</span><span class="si">}</span><span class="s2"> (likely sourced)"</span>
+            <span class="k">end</span>
+          <span class="k">end</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>I’ve found this to be a useful method during PDK testing for confirming correct template rendering while working with hiera data (structures).</p>
+
+<p>This has also been particularly useful for visualising the created directories, files and content if the classes you are creating are calling 
+other classes, as their outputs will also be rendered!</p>
+
+<p>This is all very helpful for determining and implementing new spec tests for your classes, e.g. for adding tests to automatically validate
+template / file contents generated by the subordinate classes.</p>
+
+<p>GLHF!</p>
+
+<p>JKWM.</p>
+
+</article>
+      </div>
+    </main>
+  </body>
+
+  <script>
+  var codeBlocks = document.querySelectorAll('div.highlight');
+
+  codeBlocks.forEach(function (codeBlock) {
+    var copyButton = document.createElement('button');
+    copyButton.className = 'copy';
+    copyButton.type = 'button';
+    copyButton.ariaLabel = 'Copy code to clipboard';
+    copyButton.innerText = 'Copy';
+
+    codeBlock.append(copyButton);
+
+    copyButton.addEventListener('click', function () {
+      var code = codeBlock.querySelector('code').innerText.trim();
+      window.navigator.clipboard.writeText(code);
+
+      copyButton.innerText = 'Copied';
+      var fourSeconds = 4000;
+
+      setTimeout(function () {
+        copyButton.innerText = 'Copy';
+      }, fourSeconds);
+    });
+  });
+  </script>
+</html>
