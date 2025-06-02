@@ -1,44 +1,43 @@
-name: Test Build
+# Workflow for building a Jekyll site without deployment
+name: Test Jekyll site build
 
 on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow reading contents and uploading artifacts
+permissions:
+  contents: read
+  pages: write # Keep this for artifact upload, but it won't be used for deployment
+  id-token: write # Keep this, but it won't be used for deployment
+
+# Allow only one concurrent run for testing, but do not cancel in-progress runs.
+concurrency:
+  group: "pages-test"
+  cancel-in-progress: false
+
 jobs:
-  test_build:
+  # Build job
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      # Use GitHub Actions' cache to cache dependencies on servers
-      #- uses: actions/cache@v4
-      #  with:
-      #    path: |
-      #      .asdf/**
-      #      vendor/bundle
-      #    key: ${{ runner.os }}-cache-${{ hashFiles('**/cache.key') }}
-      #    restore-keys: |
-      #      ${{ runner.os }}-cache-
-
-      # Use GitHub Deploy Action to build and deploy to Github
-      # For latest version: `jeffreytse/jekyll-deploy-action@master`
-      - uses: jeffreytse/jekyll-deploy-action@v0.6.0
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Ruby
+        # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
+        uses: ruby/setup-ruby@4a9ddd6f338a97768b8006bf671dfbad383215f4
         with:
-          provider: 'test'         # Default is github
-          token: ${{ secrets.GITHUB_TOKEN }} # It's your Personal Access Token(PAT)
-          ssh_private_key: ''        # It's your SSH private key (SSH approach)
-          repository: ''             # Default is current repository
-          branch: 'gh-pages'         # Default is gh-pages for github provider
-          jekyll_src: './'           # Default is root directory
-          jekyll_cfg: '_config.yml'  # Default is _config.yml
-          jekyll_baseurl: ''         # Default is according to _config.yml
-          ruby_ver: '3.4.1'               # Default is 3.2.0 version
-          bundler_ver: ''            # Default is compatible bundler version (~>2.5.0)
-          cname: 'blog.jkwmoore.dev' # Default is to not use a cname
-          actor: ''                  # Default is the GITHUB_ACTOR
-          pre_build_commands: |
-            sudo pacman -Sy --noconfirm base-devel cmake pkgconf
+          ruby-version: '3.4' # Not needed with a .ruby-version file
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          cache-version: 0 # Increment this number if you need to re-download cached gems
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Build with Jekyll
+        # Outputs to the './_site' directory by default
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
+      - name: Upload artifact
+        # Automatically uploads an artifact from the './_site' directory by default
+        uses: actions/upload-pages-artifact@v3
