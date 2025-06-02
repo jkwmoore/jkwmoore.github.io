@@ -4,8 +4,6 @@ title: "Using the Bitwarden SSH Agent in WSL2 Ubuntu"
 category: Bitwarden SSH
 ---
 
-## Using the Bitwarden SSH Agent in WSL2 (Ubuntu)
-
 Using SSH keys in **WSL2** (Ubuntu) when using **Bitwarden** as the SSH agent can be implemented with a few brief (scripted) steps. This post introduces the script designed to link the Bitwarden SSH agent through to your WSL2 environment (for Ubuntu only).
 
 ### Script Functionality
@@ -31,4 +29,4 @@ After script execution, restart your shell or run `source ~/scripts/agent-bridge
 
 ---
 
-Thanks go to Aaron and the original work discussed here: https://www.rebelpeon.com/bitwarden-ssh-agent-on-wsl2/
+Thanks go to Aaron and the original work discussed here: [https://www.rebelpeon.com/bitwarden-ssh-agent-on-wsl2/](https://www.rebelpeon.com/bitwarden-ssh-agent-on-wsl2/)
