@@ -41,5 +41,4 @@ jobs:
           cname: 'blog.jkwmoore.dev' # Default is to not use a cname
           actor: ''                  # Default is the GITHUB_ACTOR
           pre_build_commands: |
-            sudo apt-get update
-            sudo apt-get install -y build-essential cmake pkg-config
+            sudo pacman -Sy --noconfirm base-devel cmake pkgconf
