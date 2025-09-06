@@ -1,3 +1,4 @@
+---
 layout: post
 title: "Scripting automatic power down for idle TrueNAS instances"
 category: TrueNAS
