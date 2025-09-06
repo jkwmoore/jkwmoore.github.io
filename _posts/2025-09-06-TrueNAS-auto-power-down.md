@@ -52,6 +52,6 @@ Note: If you don't have a TrueCommand instance you need to ignore, you should ed
 ### Setup
 
 1. Add the script above to your local file system e.g. ``/root/check_replication_and_poweroff.sh``
-2. Add a CRON job.via the ``System --> Advanced Settings --> Cron Jobs`` which points at where you saved the script above. Choose to run as root, set your schedule (e.g. ``*/1 ****``), make sure to hide standard output and enable the job.
+2. Add a CRON job.via the ``System --> Advanced Settings --> Cron Jobs`` which points at where you saved the script above. Choose to run as root, set your schedule (e.g. ``*/1 * * * *``), make sure to hide standard output and enable the job.
 3. Do some testing to make sure this works how you need it to.
    
