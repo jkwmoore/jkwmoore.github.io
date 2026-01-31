@@ -4,7 +4,7 @@ title: About
 ---
 
 <h1 align="center">Hi 👋, I'm James</h1>
-<h3 align="center">A HPC Engineer at X-ISS</h3>
+<h3 align="center">A HPC Engineer at X-ISS / NAG</h3>
 
 This is a minimal blog I might write some stuff on. Maybe some things from work or me playing about in my homelab.
 
